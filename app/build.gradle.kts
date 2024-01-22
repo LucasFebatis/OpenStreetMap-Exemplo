@@ -43,6 +43,12 @@ dependencies {
     //OpenStreetMap
     implementation("com.github.MKergall:osmbonuspack:6.9.0")
 
+    // Coroutines
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+
+    // ViewModels
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
+
     // Standard
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
