@@ -9,7 +9,6 @@ import com.febatis.openstreetmapexemplo.databinding.ActivityMainBinding
 import com.febatis.openstreetmapexemplo.databinding.ActivityMapBinding
 import com.febatis.openstreetmapexemplo.databinding.ActivityMapWithSearchBinding
 import org.osmdroid.config.Configuration
-import org.osmdroid.events.DelayedMapListener
 import org.osmdroid.library.BuildConfig
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.Marker
