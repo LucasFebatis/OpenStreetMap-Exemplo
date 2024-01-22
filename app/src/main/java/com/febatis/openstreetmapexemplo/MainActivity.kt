@@ -1,10 +1,13 @@
 package com.febatis.openstreetmapexemplo
 
-import android.location.Address
-import android.location.Geocoder
 import android.os.Bundle
+import android.util.Log
+import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
+import androidx.core.widget.addTextChangedListener
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.febatis.openstreetmapexemplo.databinding.ActivityMainBinding
 import com.febatis.openstreetmapexemplo.databinding.ActivityMapBinding
 import com.febatis.openstreetmapexemplo.databinding.ActivityMapWithSearchBinding
@@ -12,7 +15,6 @@ import org.osmdroid.config.Configuration
 import org.osmdroid.library.BuildConfig
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.Marker
-import java.io.IOException
 
 
 class MainActivity : AppCompatActivity() {
@@ -30,6 +32,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(bindingMapWithSearch.root)
 
         bindingMapWithSearch.searchBar.textView.maxLines = 2
+
+        val customAdapter = CustomAdapter(mutableListOf())
+        bindingMapWithSearch.rvAddress.adapter = customAdapter
+        bindingMapWithSearch.rvAddress.layoutManager = LinearLayoutManager(this)
 
         Configuration.getInstance().userAgentValue = BuildConfig.LIBRARY_PACKAGE_NAME
 
@@ -53,13 +59,6 @@ class MainActivity : AppCompatActivity() {
 
         map.invalidate()
 
-        //val overlay = MapEventsOverlay(MapEvents())
-        //map.overlays.add(overlay)
-
-        map.setOnGenericMotionListener { _, _ ->
-            val mapCenter = map.mapCenter
-            true
-        }
 
         val myMapListener = MyMapListener {
             viewModel.findAddress(map.mapCenter.latitude, map.mapCenter.longitude)
@@ -74,6 +73,14 @@ class MainActivity : AppCompatActivity() {
             //bindingMap.textView.text = it
         }
 
+        viewModel.geoPoint.observe(this) {
+            Log.i("Test", it?.size.toString())
+            val listString = it?.map { a -> a.getAddressLine(0) }
+            Log.i("Test", listString.toString())
+            listString?.let { it1 -> customAdapter.updateList(it1) }
+            bindingMapWithSearch.progress.visibility = View.INVISIBLE
+        }
+
         map.addMapListener(myDelayedMapListener)
 
         bindingMapWithSearch.searchView
@@ -84,29 +91,13 @@ class MainActivity : AppCompatActivity() {
                 false
             }
 
-    }
-
-    fun getLocationFromAddress(strAddress: String?): GeoPoint? {
-        val coder = Geocoder(this)
-        val address: List<Address>?
-        var p1: GeoPoint? = null
-        try {
-            address = coder.getFromLocationName(strAddress!!, 5)
-            if (address == null) {
-                return null
+        bindingMapWithSearch.searchView
+            .editText
+            .addTextChangedListener {
+                bindingMapWithSearch.progress.visibility = View.VISIBLE
+                viewModel.findAddressByText(it.toString())
             }
-            val location = address[0]
-            location.latitude
-            location.longitude
-            p1 = GeoPoint(
-                (location.latitude * 1E6),
-                (location.longitude * 1E6)
-            )
-            return p1
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-        return null
+
     }
 }
 
