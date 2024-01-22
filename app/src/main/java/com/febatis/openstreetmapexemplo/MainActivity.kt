@@ -3,13 +3,13 @@ package com.febatis.openstreetmapexemplo
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
-import android.os.StrictMode
-import android.os.StrictMode.ThreadPolicy
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.febatis.openstreetmapexemplo.databinding.ActivityMainBinding
 import com.febatis.openstreetmapexemplo.databinding.ActivityMapBinding
 import com.febatis.openstreetmapexemplo.databinding.ActivityMapWithSearchBinding
 import org.osmdroid.config.Configuration
+import org.osmdroid.events.DelayedMapListener
 import org.osmdroid.library.BuildConfig
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.Marker
@@ -22,14 +22,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bindingMap: ActivityMapBinding
     private lateinit var bindingMapWithSearch: ActivityMapWithSearchBinding
 
+    private val viewModel: GeocoderViewModel by viewModels { GeocoderViewModel.Factory }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val policy = ThreadPolicy.Builder().permitAll().build()
-        StrictMode.setThreadPolicy(policy)
-
         bindingMapWithSearch = ActivityMapWithSearchBinding.inflate(layoutInflater)
         setContentView(bindingMapWithSearch.root)
+
+        bindingMapWithSearch.searchBar.textView.maxLines = 2
 
         Configuration.getInstance().userAgentValue = BuildConfig.LIBRARY_PACKAGE_NAME
 
@@ -61,14 +62,20 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        val mapEvents = MapEvents(map) {
-            bindingMapWithSearch.searchBar.setText(it)
+        val myMapListener = MyMapListener {
+            viewModel.findAddress(map.mapCenter.latitude, map.mapCenter.longitude)
+        }
 
-            bindingMapWithSearch.searchBar.textView.maxLines = 2
+        val myDelayedMapListener = MyDelayedMapListener(myMapListener, 50) {
+            bindingMapWithSearch.searchBar.setText("Carregando...")
+        }
+
+        viewModel.address.observe(this) {
+            bindingMapWithSearch.searchBar.setText(it)
             //bindingMap.textView.text = it
         }
 
-        map.addMapListener(mapEvents)
+        map.addMapListener(myDelayedMapListener)
 
         bindingMapWithSearch.searchView
             .editText
